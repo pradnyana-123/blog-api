@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  AUTHOR
+  READER
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id               String   @id @default(cuid())
+  username         String   @db.VarChar(100)
+  email            String   @unique @db.VarChar(100)
+  password         String   @db.VarChar(100)
+  bio              String?  @db.Text
+  registrationDate DateTime @default(now())
+  role             UserRole @default(READER)
+
+  posts    Post[]
+  comments Comment[]
+
+  @@map("users")
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  authorId    String
+  title       String     @db.VarChar(100)
+  content     String     @db.Text
+  exceprt     String?    @db.Text
+  publishDate DateTime   @default(now()) @map("publish_date")
+  lastUpdated DateTime   @default(now()) @map("last_updated")
+  status      PostStatus @default(DRAFT)
+  slug        String     @unique
+
+  author     User           @relation(fields: [authorId], references: [id])
+  categories PostCategory[]
+  tags       PostTag[]
+  comments   Comment[]
+
+  @@map("posts")
+}
+
+model Category {
+  id           String  @id @default(cuid())
+  categoryName String  @unique @map("category_name")
+  description  String? @db.Text
+
+  posts PostCategory[]
+
+  @@map("categories")
+}
+
+model PostCategory {
+  id         String @id @default(cuid())
+  postId     String @map("post_id")
+  categoryId String @map("category_id")
+
+  post     Post     @relation(fields: [postId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([postId, categoryId])
+  @@map("post_categories")
+}
+
+model Tag {
+  id      String @id @default(cuid())
+  tagName String @unique @map("tag_name")
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model PostTag {
+  id     String @id @default(cuid())
+  postId String @map("post_id")
+  tagId  String @map("tag_id")
+
+  post Post @relation(fields: [postId], references: [id])
+  tag  Tag  @relation(fields: [tagId], references: [id])
+
+  @@unique([postId, tagId])
+  @@map("post_tags")
+}
+
+model Comment {
+  id              String   @id @default(cuid())
+  postId          String   @map("post_id")
+  userId          String   @map("user_id")
+  authorName      String?  @map("author_name")
+  authorEmail     String?  @map("author_email")
+  commentText     String   @map("comment_text") @db.Text
+  commentDate     DateTime @default(now()) @map("comment_date")
+  parentCommentId String?  @map("parent_comment_id")
+
+  post          Post      @relation(fields: [postId], references: [id])
+  user          User?     @relation(fields: [userId], references: [id])
+  parentComment Comment?  @relation("ReplyTo", fields: [parentCommentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies       Comment[] @relation("ReplyTo")
+
+  @@map("comments")
+}
