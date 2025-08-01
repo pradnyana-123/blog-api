@@ -47,7 +47,7 @@ model Post {
   authorId    String
   title       String     @db.VarChar(100)
   content     String     @db.Text
-  exceprt     String?    @db.Text
+  excerpt     String?    @db.Text
   publishDate DateTime   @default(now()) @map("publish_date")
   lastUpdated DateTime   @default(now()) @map("last_updated")
   status      PostStatus @default(DRAFT)

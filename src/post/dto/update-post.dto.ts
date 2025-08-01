@@ -1,14 +1,16 @@
 import { IsNotEmpty,  IsOptional,  IsString, Length } from "class-validator";
 
-export class CreatePostDto {
+export class UpdatePostDto {
   @IsString()
   @IsNotEmpty()
   @Length(1, 100)
-  title: string
+  @IsOptional()
+  title?: string
 
   @IsString()
   @IsNotEmpty()
-  content: string
+  @IsOptional()
+  content?: string
 
   @IsString()
   @IsNotEmpty()
@@ -16,5 +18,6 @@ export class CreatePostDto {
   excerpt?: string;
 
 }
+
 
 

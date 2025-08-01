@@ -86,9 +86,8 @@ describe('UserController', () => {
 
         const result = await request(app.getHttpServer())
           .post('/api/users/login')
-          .send({ email: user.body.data.email, password: 'test1234'})
-
-  
+          .send({ email: 'test2@example.com', password: 'test1234'})
+ 
         expect(result.status).toBe(200)
         expect(result.body.data).toBeDefined()
 
