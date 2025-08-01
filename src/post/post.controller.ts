@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -79,6 +80,21 @@ export class PostController {
     @Body() data: UpdatePostDto
   ) {
     const result = await this.postService.updatePost(postId, authorId, data)
+
+    return {
+      data: result
+    }
+  }
+
+  @Delete(':postId')
+  @HttpCode(200)
+  async delete(
+    @Param('postId') postId: string,
+    @Req() req: Request
+  ) {
+    const userId = req.user.sub
+
+    const result = await this.postService.deletePost(postId, userId)
 
     return {
       data: result

@@ -272,24 +272,98 @@ describe('UserController', () => {
         });
         
         it('should be failed if data is invalid', async() => {
-            const userId = testUserId;
+            const result = await request(app.getHttpServer())
+                .patch(`/api/posts/${postIdForUpdate}/${testUserId}`)
+                .set('Cookie', cookie)
+                .send({ title: '', content: 123, excerpt: true})
 
+            expect(result.status).toBe(400)
+            expect(result.body).toBeDefined()
         })
 
-        it('', async() => {
-            
+        it('should be failed if user id is invalid', async() => {
+            const wrongUserId = 'lksdfjiopuqweoiwer';
+            const result = await request(app.getHttpServer())
+                .patch(`/api/posts/${postIdForUpdate}/${wrongUserId}`)
+                .set('Cookie', cookie)
+                .send({ title: 'Title after update', content: 'Content after update', excerpt: 'Excerpt after update' })
+ 
+            expect(result.status).toBe(403)
+            expect(result.body).toBeDefined()
         })
 
-        it('', async() => {
-            
+        it('should be failed also if post id is invalid', async() => {
+            const wrongPostId = 'kljasdfio1q2jkhsdfj';
+            const result = await request(app.getHttpServer())
+                .patch(`/api/posts/${wrongPostId}/${testUserId}`)
+                .set('Cookie', cookie)
+                .send({ title: 'Title after update', content: 'Content after update', excerpt: 'Excerpt after update' })
+
+            expect(result.status).toBe(404)
+            expect(result.body).toBeDefined()
         })
 
-        it('', async() => {
-            
+        it('should update post successfully', async() => {
+            const result = await request(app.getHttpServer()) 
+                .patch(`/api/posts/${postIdForUpdate}/${testUserId}`)
+                .set('Cookie', cookie)
+                .send({ title: 'Title after update', content: 'Content after update', excerpt: 'Excerpt after update' })
+
+            expect(result.status).toBe(200)
+            expect(result.body.data).toBeDefined()
+            expect(result.body.data.title).toBe('Title after update')
+            expect(result.body.data.content).toBe('Content after update')
+            expect(result.body.data.excerpt).toBe('Excerpt after update')
+            expect(result.body.data.slug).toBe('title-after-update')
         });
 
         afterAll(async() => {
             await prisma.post.deleteMany({})
+        })
+    });
+
+    describe('DELETE /api/posts/:postId', () => {
+        let postIdForDelete: string;
+
+        beforeEach(async() => {
+            await prisma.post.deleteMany({})
+
+            createdPostIds = []
+
+            const post = await createSinglePostForUpdate(testUserId)
+
+            console.log(`created ${post.title} for PATCH test`)
+
+            postIdForDelete = post.id
+        });        
+
+        it('should be rejected if postId is invalid',  async() => {
+           const wrongPostId = 'q2weiopfklsdjasdfa;jkl';
+           const result = await request(app.getHttpServer()) 
+            .delete(`/api/posts/$${wrongPostId}`)
+            .set('Cookie', cookie)
+
+            console.log(result.body)
+            expect(result.status).toBe(404)
+            expect(result.body).toBeDefined()
+        });
+
+        it('should be rejected also if token in cookie is invalid',  async() => {
+            const result = await request(app.getHttpServer())
+                .delete(`/api/posts/${postIdForDelete}`)
+
+            expect(result.status).toBe(401)
+            expect(result.body).toBeDefined()
+        })
+
+        it('should delete post successfully',  async() => {
+            const result = await request(app.getHttpServer())
+               .delete(`/api/posts/${postIdForDelete}`)
+               .set('Cookie', cookie)
+            
+            console.log(result.body)
+            expect(result.status).toBe(200)
+            expect(result.body).toBeDefined()
         })
     })
     

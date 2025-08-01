@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/common/prisma.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import slugify from 'slugify';
@@ -82,7 +82,7 @@ export class PostService {
     }
 
     if(existingPost.authorId !== authorId) {
-      throw new BadRequestException('You are not authorized to update this post.')
+      throw new ForbiddenException('You are not authorized to update this post.')
     }
 
     let newSlug: string | undefined
@@ -141,6 +141,25 @@ export class PostService {
     })
 
     return post;
+
+  }
+
+  async deletePost(postId: string, authorId: string) {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId }
+    });
+
+    if(!post) {
+      throw new NotFoundException('Post not found')
+    }
+
+    if(post.authorId !== authorId) {
+      throw new ForbiddenException('You are not allowed to delete this post.')
+    } 
+
+    return await this.prisma.post.delete({
+      where: { id: postId }
+    });
 
   }
 }
